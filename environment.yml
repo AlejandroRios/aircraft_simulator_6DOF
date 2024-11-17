@@ -1,0 +1,19 @@
+name: simulador-6dof
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10  # Escolha a versão adequada para o projeto
+  - numpy         # Operações matemáticas e vetoriais
+  - scipy         # Ferramentas científicas e equações diferenciais
+  - matplotlib    # Visualizações
+  - pandas        # Análise e manipulação de dados
+  - pybullet      # Simulações físicas (ou outro motor físico, se necessário)
+  - pygame        # Visualização interativa e controle de entrada
+  - pyopengl      # Renderização gráfica em 3D
+  - jupyterlab    # Para notebooks interativos
+  - pytest        # Testes automatizados
+
+  # Adicione mais bibliotecas aqui, conforme necessário
+  - pip:
+      - seaborn      # Visualizações avançadas (opcional)
+      - pyquaternion # Trabalhar com quaternions para 6DOF
