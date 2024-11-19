@@ -40,10 +40,9 @@ def trimGNBA(x, trim_par):
         Xdot[7] - trim_par['phi_dot_deg_s'],
         Xdot[8],
         Xdot[9],
-        Xdot[10] - trim_par['psi_dot_deg_s'],
+        Xdot[10] - trim_par['psi_dot_deg_s'] ,
         Xdot[11] - V_i[1],
         Beta,
-        U[0] - U[1],
-        0  
+        U[0] - U[1]
     ])
     return f

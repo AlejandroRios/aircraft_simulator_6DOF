@@ -85,7 +85,7 @@ trim_par = {
 }
 
 # Resolver a condição de trim
-x_eq_0 = np.zeros(15)
+x_eq_0 = np.zeros(14)
 x_eq_0[0] = V_eq
 
 x_eq = fsolve(trimGNBA, x_eq_0, args=(trim_par,))
@@ -105,8 +105,10 @@ print(f"beta = {X_eq[7]:.4f} deg")
 print(f"Mach = {Y_eq[19]:.4f}")
 
 # Simulação
-tf = 50 if trim_par['psi_dot_deg_s'] == 0 else 360 / trim_par['psi_dot_deg_s']
-dt = 1e-5
+# tf = 20 if trim_par['psi_dot_deg_s'] == 0 else 360 / trim_par['psi_dot_deg_s']
+
+tf = 30 
+dt = 1e-3
 
 sol = solve_ivp(
     lambda t, X: dynamics(t, X, U_eq, trim_par['W'])[0],  # Use apenas Xdot

@@ -26,8 +26,8 @@ def control_vec(x):
     U[0] = x[9]  # Empuxo da esquerda (Tle)
     U[1] = x[10]  # Empuxo da direita (Tre)
     U[2] = x[11]  # Ângulo do estabilizador horizontal (ih)
-    U[3] = x[12]  # Deflexão do profundor (de)
-    U[4] = x[13]  # Deflexão dos ailerons (da)
-    U[5] = x[14]  # Deflexão do leme de direção (dr)
+    U[4] = x[12]  # Deflexão do profundor (de)
+    U[5] = x[13]  # Deflexão dos ailerons (da)
+
 
     return U

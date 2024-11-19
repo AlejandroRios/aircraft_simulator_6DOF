@@ -24,6 +24,8 @@ def state_vec(x, trim_par):
     # Inicialização do vetor de estado
     X = np.zeros(12)
 
+    print(X)
+
     # Estados diretamente extraídos de 'x'
     X[0] = x[0]  # Velocidade (V)
     X[1] = x[1]  # Ângulo de ataque (alpha)
