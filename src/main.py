@@ -93,6 +93,8 @@ X_eq = state_vec(x_eq, trim_par)
 U_eq = control_vec(x_eq)
 Xdot_eq, Y_eq = dynamics(0, X_eq, U_eq, trim_par['W'])
 
+print(Y_eq)
+
 # Resultados
 print("----- PARÂMETROS DE VOO TRIMADOS -----")
 print(f"x_CG = {xCG:.4f} m")
