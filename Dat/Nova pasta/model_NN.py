@@ -185,6 +185,15 @@ def main():
     scripted_model.save("model_scripted.pt")
     print("TorchScript model saved as 'model_scripted.pt'")
 
+    import joblib
+
+    # Salvar os scalers
+    joblib.dump(scaler_X, "scaler_X.pkl")
+    joblib.dump(scaler_y, "scaler_y.pkl")
+
+    print("Scalers salvos como 'scaler_X.pkl' e 'scaler_y.pkl'")
+
+
 
 # Executar o código principal
 if __name__ == "__main__":
