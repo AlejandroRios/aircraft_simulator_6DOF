@@ -86,8 +86,8 @@ def dynamics(t, X, U, W):
     ])
 
     # Cargas aerodinâmicas e propulsivas
-    Faero_b, Maero_O_b, _ = aero_loads(X, U)
-    Fprop_b, Mprop_O_b, _ = prop_loads(X, U)
+    Faero_b, Maero_O_b, Yaero = aero_loads(X, U)
+    Fprop_b, Mprop_O_b, Yprop = prop_loads(X, U)
 
     # Equações de forças e momentos
     omega_b = np.array([p_rad_s, q_rad_s, r_rad_s])
@@ -142,7 +142,31 @@ def dynamics(t, X, U, W):
     )
 
     Y = np.concatenate([
-        X, n_pilot_b, n_C_b, [Mach, qbar], Fprop_b, Mprop_O_b
+        np.atleast_1d(V),
+        np.atleast_1d(alpha_deg),
+        np.atleast_1d(q_deg_s),
+        np.atleast_1d(theta_deg),
+        np.atleast_1d(H_m),
+        np.atleast_1d(x),
+        np.atleast_1d(beta_deg),
+        np.atleast_1d(phi_deg),
+        np.atleast_1d(p_deg_s),
+        np.atleast_1d(r_deg_s),
+        np.atleast_1d(psi_deg),
+        np.atleast_1d(y),
+        np.atleast_1d(n_pilot_b.flatten()),
+        np.atleast_1d(n_C_b.flatten()),
+        np.atleast_1d(Mach),
+        np.atleast_1d(qbar),
+        np.atleast_1d(Fprop_b.flatten()),
+        np.atleast_1d(Mprop_O_b.flatten()),
+        np.atleast_1d(Yaero.flatten()),
+        np.atleast_1d(V_dot),
+        np.atleast_1d(alpha_dot_deg_s),
+        np.atleast_1d(beta_dot_deg_s),
+        np.atleast_1d(u),
+        np.atleast_1d(v),
+        np.atleast_1d(w)
     ])
 
     return Xdot, Y

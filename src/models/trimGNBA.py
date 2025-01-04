@@ -22,6 +22,7 @@ def trimGNBA(x, trim_par):
     U = control_vec(x)
 
     Xdot, Y = dynamics(0, X, U, trim_par['W'])
+    print(Xdot)
 
     # Velocidade inercial
     C_tv = Cmat(2, np.radians(trim_par['gamma_deg'])) @ Cmat(3, np.radians(trim_par['chi_deg']))
