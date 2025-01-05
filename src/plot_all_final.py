@@ -26,13 +26,13 @@ def plot_all_final(Tsol, Ysol, Usol, Xsol):
 
     # Figura 1: Estados principais
     fig1, axs = plt.subplots(2, 3, figsize=(12, 8))
-    axs[0, 0].plot(Tsol, Ysol[:, 0])  # Substituímos por índices válidos
+    axs[0, 0].plot(Tsol, Ysol[:, 0])
     axs[0, 0].set_xlabel('t [s]')
     axs[0, 0].set_ylabel('V [m/s]')
 
     axs[0, 1].plot(Tsol, Ysol[:, 1])
     axs[0, 1].set_xlabel('t [s]')
-    axs[0, 1].set_ylabel('α [deg]')
+    axs[0, 1].set_ylabel(r'$\alpha$ [deg]')
 
     axs[0, 2].plot(Tsol, Ysol[:, 2])
     axs[0, 2].set_xlabel('t [s]')
@@ -40,18 +40,16 @@ def plot_all_final(Tsol, Ysol, Usol, Xsol):
 
     axs[1, 0].plot(Tsol, Ysol[:, 3])
     axs[1, 0].set_xlabel('t [s]')
-    axs[1, 0].set_ylabel('θ [deg]')
+    axs[1, 0].set_ylabel(r'$\theta$ [deg]')
 
+    # AQUI a correção:
     axs[1, 1].plot(Tsol, Ysol[:, 4])
     axs[1, 1].set_xlabel('t [s]')
-    axs[1, 1].set_ylabel('x [m]')
+    axs[1, 1].set_ylabel('H [m]')   # altitude
 
     axs[1, 2].plot(Tsol, Ysol[:, 5])
     axs[1, 2].set_xlabel('t [s]')
-    axs[1, 2].set_ylabel('H [m]')
-
-    fig1.tight_layout()
-    fig1.savefig("figure_1.pdf")
+    axs[1, 2].set_ylabel('x [m]')   # posição x
 
     # Figura 2: Ângulos e velocidades
     fig2, axs = plt.subplots(2, 3, figsize=(12, 8))
