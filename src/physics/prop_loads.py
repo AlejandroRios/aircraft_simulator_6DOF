@@ -63,8 +63,8 @@ def prop_loads(X, U):
     Mbre = np.cross(rre_b, Fbre)
 
     # Soma de forças e momentos
-    Fprop_b = Fble + Fbre  # Soma das forças
-    Mprop_O_b = Mble + Mbre  # Soma dos momentos
+    Fprop_b = Fble+Fbre  # Soma das forças
+    Mprop_O_b = Mble-Mbre  # Soma dos momentos
 
     # Variáveis adicionais de saída
     Yprop = np.concatenate([Fble, Fbre, Mble, Mbre])

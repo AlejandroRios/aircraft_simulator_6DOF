@@ -20,12 +20,16 @@ def state_vec(x, trim_par):
 
     Retorno:
     - X: numpy.ndarray, vetor de estado completo (12 elementos).
+
+    X = [0   1   2    3   4 5  6    7   8  9   10   11 | 12  13  14 15 16 17]
+    X = [V alpha q  theta H x beta phi  p  r   psi  y  | Tle Tre ih de da dr]
+    x = [0   1   2    3   4 -  5    6   7  8  -    -   | 9   10  11 12 13 14]
     """
     # Inicialização do vetor de estado
     X = np.zeros(12)
 
     # Estados diretamente extraídos de 'x'
-    X[0] = x[0]  # Velocidade (V)
+    X[0] = trim_par['V']  # Velocidade (V)
     X[1] = x[1]  # Ângulo de ataque (alpha)
     X[2] = x[2]  # Velocidade angular pitch (q)
     X[3] = x[3]  # Ângulo de inclinação (theta)
@@ -33,11 +37,14 @@ def state_vec(x, trim_par):
     # Estado configurado pelo parâmetro de trimagem
     X[4] = trim_par['H_m']  # Altitude (H)
 
+    X[5] = x[4]
+
     # Outros estados a partir de 'x'
     X[6] = x[4]  # Ângulo de deriva (beta)
     X[7] = x[5]  # Ângulo de rolamento (phi)
     X[8] = x[6]  # Velocidade angular roll (p)
     X[9] = x[7]  # Velocidade angular yaw (r)
     X[10] = x[8]  # Ângulo yaw (psi)
+    X[11] = 0.0 # se não for usado
 
     return X

@@ -1,24 +1,28 @@
 """
-Simulador de Aeronaves 6DOF - Main
-Descrição: Configuração inicial, cálculo das condições de equilíbrio e simulação.
+Simulador 6DOF - Main para bomba MK 82
+Descrição: Configuração inicial e simulação balística de uma bomba Mk 82 sem controle e sem trimagem.
 Autor: Seu Nome
 Data de Criação: YYYY-MM-DD
 """
 
 import numpy as np
-from scipy.optimize import fsolve
 from scipy.integrate import solve_ivp
 
-from models.trimGNBA import trimGNBA
-from models.state_vec import state_vec
-from models.control_vec import control_vec
+# Se sua função dynamics estiver no módulo physics/dynamics.py, mantenha a importação:
 from physics.dynamics import dynamics
+
+# Se quiser usar ISA para altitude/velocidade do som, etc. (opcional):
 from physics.ISA import ISA
+
+# Plotagem final (assumindo que você tenha esse script):
 from plot_all_final import plot_all_final
-from globals import aircraft, g
 
-# Constantes globais
+# Se você tiver um arquivo globals.py que define g ou algo similar:
+from globals import g
 
+# =============================================================================
+# 1. Constantes globais e conversões
+# =============================================================================
 m2ft = 1 / 0.3048
 ft2m = 1 / m2ft
 lb2kg = 0.45359237
@@ -28,137 +32,99 @@ kg2slug = 1 / slug2kg
 deg2rad = np.pi / 180
 rad2deg = 1 / deg2rad
 
-# Dados geométricos e de inércia
-b = 32.757  # Envergadura (m)
-S = 116  # Área de referência (m²)
-c = 3.862  # Corda média aerodinâmica (m)
-W = 55788 * g  # Peso (N)
-m = W / g  # Massa (kg)
+# =============================================================================
+# 2. Dados aproximados da bomba MK 82
+# =============================================================================
+m_bomba = 227.0  # Massa (kg), ~500 lb
+# Estimando área frontal:
+diametro = 0.273  # m
+S_bomba = np.pi * (diametro / 2)**2  # ~0,0585 m²
 
-Ixx = 821466
-Iyy = 3343669
-Izz = 4056813
-Ixy = 0
-Ixz = 178919
-Iyz = 0
+# Momentos de inércia (aprox.):
+Ixx = 3.0     # kg·m² (eixo longitudinal, pode variar)
+Iyy = 75.0    # kg·m² (eixo transversal)
+Izz = 75.0    # kg·m² (eixo transversal)
+Ixy = 0.0
+Ixz = 0.0
+Iyz = 0.0
 
-J = np.array([
+J_bomba = np.array([
     [Ixx, -Ixy, -Ixz],
     [-Ixy, Iyy, -Iyz],
     [-Ixz, -Iyz, Izz]
 ])
 
-# Configuração de CG e outras propriedades
-xCG, yCG, zCG = 0, 0, 0
-rC_b = np.array([xCG, yCG, zCG])
-r_pilot_b = np.array([15, 0, 0])
-hex = 160
-
+# =============================================================================
+# 3. Montagem do dicionário "aircraft" (aqui, nossa 'bomba')
+# =============================================================================
+# Você pode manter a mesma estrutura do seu projeto para reutilizar dynamics, etc.
 aircraft = {
-    'm': m,
-    'J_O_b': J,
-    'rC_b': rC_b,
-    'b': b,
-    'S': S,
-    'c': c,
-    'hex': hex,
-    'r_pilot_b': r_pilot_b
+    'm': m_bomba,     # Massa
+    'J_O_b': J_bomba, # Tensor de inércia
+    'rC_b': np.array([0.0, 0.0, 0.0]),  # CG no referencial de corpo (pode ser 0,0,0)
+    'b': diametro,    # Se quiser associar 'envergadura' ~ diâmetro (não é muito relevante para bomba)
+    'S': S_bomba,     
+    'c': diametro,    # 'corda' ~ diâmetro, novamente irrelevante mas mantido para compatibilidade
+    'hex': 0.0,       # Sem motor, sem torque do eixo
+    'r_pilot_b': np.array([0.0, 0.0, 0.0])  # Sem piloto, mas mantido se dynamics usa
 }
 
-# Condições de equilíbrio
-H_m_eq = 38000 * ft2m
-rho, _, _, a = ISA(H_m_eq)
+# =============================================================================
+# 4. Condições iniciais (sem trim)
+# =============================================================================
+# Exemplo: Lançar a 3000 m de altitude, velocidade ~200 m/s horizontal
+H_inicial = 3000.0  # m
+V_inicial = 200.0   # m/s (horizontal)
+z0 = H_inicial
 
-Mach = 0.78
-V_eq = Mach * a
+# Em um modelo 6DOF (12 estados), por exemplo:
+# [u, v, w, p, q, r, x, y, z, phi, theta, psi]
+X0 = np.zeros(12)
+X0[0] = V_inicial  # u = 200 m/s
+X0[4] = z0         # z = 3000 m
+# Se quiser algum pequeno ângulo de ataque ou rotação inicial, ajuste aqui.
 
-trim_par = {
-    'V': V_eq,
-    'H_m': H_m_eq,
-    'chi_deg': 0,
-    'gamma_deg': 0,
-    'phi_dot_deg_s': 0,
-    'theta_dot_deg_s': 0,
-    'psi_dot_deg_s': 0,
-    'beta_deg_eq': 0,
-    'W': np.zeros(3)
-}
+# Sem superfícies de controle (bomba “dumb”), então U ~ zeros
+U_bomba = np.zeros(6)  # Ajuste se seu dynamics esperar outro dimensionamento
+W_bomba = np.zeros(3)  # Se seu dynamics usar vento ou alguma força externa, senão zero
 
-# Resolver a condição de trim
-x_eq_0 = np.zeros(14)
-x_eq_0[0] = V_eq
+# =============================================================================
+# 5. Tempo de simulação
+# =============================================================================
+tf = 5.0     # tempo final (s)
+dt = 0.01     # passo para solver
+t_span = (0, tf)
+t_eval = np.arange(0, tf + dt, dt)
 
-x_eq = fsolve(trimGNBA, x_eq_0, args=(trim_par,))
-X_eq = state_vec(x_eq, trim_par)
-U_eq = control_vec(x_eq)
-Xdot_eq, Y_eq = dynamics(0, X_eq, U_eq, trim_par['W'])
-
-
-# Resultados
-print("----- PARÂMETROS DE VOO TRIMADOS -----\n")
-
-# Centro de Gravidade (CG)
-print(f"x_CG       = {xCG:.4f} m")
-print(f"y_CG       = {yCG:.4f} m")
-print(f"z_CG       = {zCG:.4f} m")
-print(f"gamma      = {trim_par['gamma_deg']:.4f} deg")
-print(f"chi        = {trim_par['chi_deg']:.4f} deg")
-print(f"phi_dot    = {trim_par['phi_dot_deg_s']:.4f} deg/s")
-print(f"theta_dot  = {trim_par['theta_dot_deg_s']:.4f} deg/s")
-print(f"psi_dot    = {trim_par['psi_dot_deg_s']:.4f} deg/s\n")
-
-# Estado do Equilíbrio (X_eq)
-print(f"V          = {X_eq[0]:.2f} m/s")
-print(f"alpha      = {X_eq[1]:.4f} deg")
-print(f"q          = {X_eq[2]:.4f} deg/s")
-print(f"theta      = {X_eq[3]:.4f} deg")
-print(f"H          = {X_eq[4]:.1f} m")
-print(f"beta       = {X_eq[6]:.4f} deg")
-print(f"phi        = {X_eq[7]:.4f} deg")
-print(f"p          = {X_eq[8]:.4f} deg/s")
-print(f"r          = {X_eq[9]:.4f} deg/s")
-print(f"psi        = {X_eq[10]:.4f} deg\n")
-
-# Controles de Equilíbrio (U_eq)
-print(f"Tle        = {U_eq[0]:.2f} N")
-print(f"Tre        = {U_eq[1]:.2f} N")
-print(f"ih         = {U_eq[2]:.4f} deg")
-print(f"delta_e    = {U_eq[3]:.4f} deg")
-print(f"delta_a    = {U_eq[4]:.4f} deg")
-print(f"delta_r    = {U_eq[5]:.4f} deg\n")
-
-# Saídas de Equilíbrio (Y_eq)
-print(f"n_x_pilot  = {Y_eq[12]:.4f}")
-print(f"n_y_pilot  = {Y_eq[13]:.4f}")
-print(f"n_z_pilot  = {Y_eq[14]:.4f}")
-print(f"n_x_CG     = {Y_eq[15]:.4f}")
-print(f"n_y_CG     = {Y_eq[16]:.4f}")
-print(f"n_z_CG     = {Y_eq[17]:.4f}\n")
-print(f"Mach       = {Y_eq[18]:.4f}")
-print(f"Dyn. p.    = {Y_eq[19]:.2f} kg/ms^2")
-
-# Simulação
-# tf = 20 if trim_par['psi_dot_deg_s'] == 0 else 360 / trim_par['psi_dot_deg_s']
-
-tf = 30 
-dt = 1e-3
-
+# =============================================================================
+# 6. Integração numérica das EDOs
+# =============================================================================
 sol = solve_ivp(
-    lambda t, X: dynamics(t, X, U_eq, trim_par['W'])[0],  # Use apenas Xdot
-    [0, tf],
-    X_eq,
-    t_eval=np.arange(0, tf, dt),
+    fun=lambda t, X: dynamics(t, X, U_bomba, W_bomba)[0],
+    t_span=t_span,
+    y0=X0,
+    method='RK45',
+    t_eval=t_eval,
     max_step=dt
 )
 
-# Extraia as informações de tempo e solução
-Tsol = sol.t  # Valores do tempo
-Xsol = sol.y.T  # Solução transposta para alinhar com a convenção usada
+# Extraindo resultado
+Tsol = sol.t
+Xsol = sol.y.T  # Transpõe para que cada linha seja um instante de tempo
 
-# Ysol e Usol devem ser calculados manualmente após a integração
-Usol = np.tile(U_eq, (len(Tsol), 1))  # Replique U_eq ao longo de Tsol
-Ysol = np.array([dynamics(t, Xsol[i], U_eq, trim_par['W'])[1] for i, t in enumerate(Tsol)])
-print(f"Ysol shape: {Ysol.shape}")
+# Se a dinâmica retorna também Y (saídas), podemos calcular a cada passo:
+Ysol = []
+for i, t in enumerate(Tsol):
+    _, Y_i = dynamics(t, Xsol[i], U_bomba, W_bomba)
+    Ysol.append(Y_i)
+Ysol = np.array(Ysol)
 
-# Chame a função de plotagem
+# Montando Usol para consistência com a função de plot
+Usol = np.tile(U_bomba, (len(Tsol), 1))
+
+# =============================================================================
+# 7. Plotagem dos resultados
+# =============================================================================
 plot_all_final(Tsol, Ysol, Usol, Xsol)
+
+print("Simulação da bomba Mk 82 concluída. Verifique os gráficos para analisar a trajetória.")
